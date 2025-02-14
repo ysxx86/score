@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -2356,4 +2357,2364 @@
         });
     </script>
 </body>
+=======
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <!-- 添加移动端视口配置 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>五年3班学生积分管理系统</title>
+    <!-- 添加 SheetJS 库 -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+    <!-- 添加 QRCode.js 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #f5f5f5;             /* 改变背景色 */
+        }
+        .student-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);  /* 6列等宽 */
+            gap: 20px;                              /* 增加间距 */
+            margin: 20px auto;
+            padding: 15px;                          /* 添加内边距 */
+            max-width: 1600px;                      /* 限制最大宽度 */
+        }
+        .student-card {
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #fff;                 /* 使用纯白背景 */
+            min-height: 140px; /* 减小卡片高度使一页能显示6行 */
+            width: 100%;     /* 确保卡片占满网格单元格 */
+            box-sizing: border-box;  /* 包含padding和border在内的总宽度 */
+            min-width: 240px; /* 确保最小宽度 */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* 添加阴影效果 */
+            transition: all 0.3s ease;              /* 添加过渡效果 */
+            position: relative;
+        }
+        .student-card:hover {
+            transform: translateY(-2px);            /* 悬停时轻微上浮 */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .score-input {
+            width: 60px;
+            margin: 5px 0;
+            padding: 3px;
+        }
+        .button-group {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        button {
+            cursor: pointer;
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            transition: 0.3s;
+        }
+        .add-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .subtract-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        button:hover {
+            opacity: 0.8;
+        }
+        .total-score {
+            font-weight: bold;
+            color: #2196F3;
+            margin: 0;  /* 移除原有边距 */
+            border-bottom: 1px solid #e0e0e0;  /* 添加分隔线 */
+            padding-bottom: 3px;  /* 分隔线与文字的间距 */
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        .reset-btn {
+            background-color: #ff9800;
+            color: white;
+            padding: 8px 16px;
+            margin-right: 10px;
+        }
+        .sort-btn {
+            background-color: #2196F3;
+            color: white;
+            padding: 8px 16px;
+        }
+        .student-name {
+            cursor: pointer;
+            padding: 2px;
+            border-radius: 3px;
+            word-break: break-all;  /* 允许长文本在任意字符处换行 */
+            min-height: 24px;      /* 确保名字区域高度一致 */
+        }
+        .student-name:hover {
+            background-color: #e0e0e0;
+        }
+        .clear-storage-btn {
+            background-color: #9c27b0;
+            color: white;
+            padding: 8px 16px;
+            margin-right: 10px;
+        }
+        .student-number {
+            color: #666;
+            margin-right: 5px;
+        }
+        .history-log {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .export-btn, .import-btn, .restore-order-btn {
+            background-color: #607d8b;
+            color: white;
+            padding: 8px 16px;
+            margin-right: 10px;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 4px;
+        }
+        .history-item {
+            padding: 8px 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        /* 添加历史记录按钮和弹窗样式 */
+        .history-btn {
+            background-color: #795548;
+            color: white;
+            font-size: 12px;
+            margin-top: 5px;
+            width: 100%;
+        }
+        
+        .history-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .history-modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+            position: relative;
+        }
+        
+        .close-modal {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            font-size: 20px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .history-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .score-display {
+            display: flex;
+            flex-direction: column;  /* 改为纵向排列 */
+            margin: 5px 0;
+        }
+        .score-symbol {
+            display: grid;
+            grid-template-columns: repeat(10, 18px); /* 稍微减小符号大小 */
+            gap: 1px;
+            margin-top: 2px;
+            min-height: 30px;
+            font-size: 12px;
+            justify-content: center;
+        }
+        .star, .moon, .sun {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 18px;
+            height: 18px;
+            font-size: 14px;
+        }
+
+        /* 修改排行榜样式 */
+        .leaderboard {
+            position: fixed;
+            left: 20px;           /* 改回左侧定位 */
+            right: auto;          /* 移除右侧定位 */
+            top: 50%;
+            transform: translateY(-50%);
+            width: 200px;
+            background: #fff;
+            border: 2px solid gold;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .leaderboard-title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        
+        .rank-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 5px;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        
+        .rank-number {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            border-radius: 50%;
+            font-weight: bold;
+        }
+        
+        .rank-1 .rank-number { 
+            background: gold;
+            color: #fff;
+        }
+        .rank-1 .rank-crown {
+            color: gold;
+            margin-left: 5px;
+        }
+        
+        .rank-2 .rank-number {
+            background: silver;
+            color: #fff;
+        }
+        .rank-2 .rank-crown {
+            color: silver;
+            margin-left: 5px;
+        }
+        
+        .rank-3 .rank-number {
+            background: #cd7f32;
+            color: #fff;
+        }
+        .rank-3 .rank-crown {
+            color: #cd7f32;
+            margin-left: 5px;
+        }
+        
+        .rank-4 .rank-number,
+        .rank-5 .rank-number {
+            background: #808080;
+            color: #fff;
+        }
+        
+        .rank-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .rank-score {
+            margin-left: 10px;
+            color: #2196F3;
+            font-weight: bold;
+        }
+
+        /* 修改主内容区域布局 */
+        .main-content {
+            margin-left: 240px; /* 改回左边距 */
+            margin-right: 0;    /* 移除右边距 */
+        }
+        .sun {
+            color: #FFD700;
+            font-size: 18px;
+        }
+        .moon {
+            color: #7986CB;
+            font-size: 16px;
+        }
+        .star {
+            color: #FFD700;
+            font-size: 16px;
+        }
+        /* 调整标题区域样式 */
+        h2 {
+            margin-top: 0;        /* 移除顶部边距 */
+            padding-top: 20px;    /* 添加顶部内边距 */
+        }
+        .lock-btn {
+            background-color: #FF5722;
+            color: white;
+            padding: 8px 16px;
+            margin-right: 10px;
+        }
+        
+        .lock-btn.locked {
+            background-color: #607D8B;
+        }
+
+        /* 禁用状态样式 */
+        .disabled {
+            opacity: 0.6;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+
+        /* 添加密码弹窗样式 */
+        .password-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .password-modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            text-align: center;
+            width: 300px;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 10px;
+            margin: 20px 0;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .password-input:focus {
+            border-color: #2196F3;
+        }
+
+        .password-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .password-btn {
+            padding: 8px 20px;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .password-submit {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .password-cancel {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .password-title {
+            color: #333;
+            margin: 0 0 20px 0;
+            font-size: 18px;
+        }
+
+        /* 统一弹窗样式 */
+        .modal-base {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content-base {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            text-align: center;
+            width: 300px;
+            position: relative;
+        }
+
+        .modal-title {
+            color: #333;
+            margin: 0 0 20px 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .modal-close {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            font-size: 20px;
+            cursor: pointer;
+            color: #666;
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 14px;
+        }
+
+        .modal-btn-primary {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .modal-btn-secondary {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .modal-content {
+            margin: 15px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* 添加输入框样式 */
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .modal-input:focus {
+            border-color: #2196F3;
+        }
+
+        /* 修改历史记录内容样式 */
+        .history-item {
+            text-align: left;
+            padding: 8px 12px;
+            border-bottom: 1px solid #eee;
+            margin: 5px 0;
+        }
+
+        /* 添加积分区间颜色样式 */
+        .score-0-100 {
+            color: #2196F3;  /* 蓝色 */
+        }
+        
+        .score-100-500 {
+            color: #FF9800;  /* 橙色 */
+        }
+        
+        .score-500-1000 {
+            color: #F44336;  /* 红色 */
+        }
+
+        /* 添加响应式布局样式 */
+        @media screen and (max-width: 1024px) {
+            .student-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 15px;
+                padding: 10px;
+            }
+
+            .main-content {
+                margin-left: 0;  /* 移动端移除左边距 */
+            }
+
+            .leaderboard {
+                display: none; /* 隐藏固定排行榜 */
+            }
+
+            /* 添加移动端排行榜样式 */
+            .mobile-leaderboard {
+                display: block;
+                margin: 20px 0;
+                background: #fff;
+                border: 2px solid gold;
+                border-radius: 10px;
+                padding: 15px;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .student-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .controls {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .controls button {
+                flex: 1;
+                min-width: 150px;
+                margin: 0;
+            }
+
+            body {
+                padding: 10px;
+            }
+
+            .modal-content-base {
+                width: 90%;
+                margin: 0 15px;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .student-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .student-card {
+                min-width: unset;
+            }
+
+            h2 {
+                font-size: 18px;
+            }
+
+            .controls button {
+                padding: 6px 12px;
+                font-size: 14px;
+                min-width: unset;
+            }
+        }
+
+        /* 添加触摸设备优化 */
+        @media (hover: none) {
+            .student-card:hover {
+                transform: none;
+            }
+
+            button {
+                padding: 8px 16px; /* 增大按钮点击区域 */
+            }
+
+            .student-name {
+                padding: 6px;  /* 增大名字点击区域 */
+            }
+        }
+
+        /* 修改排行榜显示逻辑 */
+        .mobile-leaderboard {
+            display: none;
+        }
+
+        @media screen and (min-width: 1025px) {
+            .mobile-leaderboard {
+                display: none;
+            }
+            .leaderboard {
+                display: block;
+            }
+        }
+
+        /* 添加二维码按钮和弹窗样式 */
+        .qr-btn {
+            background-color: #9C27B0;
+            color: white;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+        
+        .qr-modal .modal-content-base {
+            width: 300px;
+            padding: 20px;
+        }
+        
+        #qrcode {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        
+        .qr-instructions {
+            font-size: 14px;
+            color: #666;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        @media screen and (max-width: 768px) {
+            .qr-btn {
+                display: none; /* 在移动设备上隐藏二维码按钮 */
+            }
+        }
+
+        /* 添加修改密码按钮样式 */
+        .change-password-btn {
+            background-color: #673AB7;
+            color: white;
+            padding: 8px 16px;
+            margin-right: 10px;
+        }
+
+        /* 添加系统提示弹窗特殊样式 */
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .alert-warning {
+            color: #856404;
+            background-color: #fff3cd;
+            border-color: #ffeeba;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .system-alert .modal-content-base {
+            border-left: 5px solid #4CAF50;
+            max-width: 400px;
+            width: 90%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .system-alert.warning .modal-content-base {
+            border-left: 5px solid #ff9800;
+        }
+
+        .system-alert .modal-title {
+            color: #4CAF50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .system-alert.warning .modal-title {
+            color: #ff9800;
+        }
+
+        .system-alert .modal-content {
+            font-size: 16px;
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            text-align: center;
+            word-wrap: break-word;
+        }
+
+        .system-alert .modal-close {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+        }
+
+        /* 添加新增学生卡片样式 */
+        .add-student-card {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f5f5f5;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-student-card:hover {
+            background-color: #e0e0e0;
+        }
+
+        .add-icon {
+            font-size: 40px;
+            color: #666;
+        }
+
+        /* 添加删除按钮样式 */
+        .delete-student-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 24px;
+            height: 24px;
+            border-radius: 12px;
+            background-color: #f44336;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .student-card:hover .delete-student-btn {
+            opacity: 1;
+        }
+
+        .admin-btn {
+            background-color: #673AB7;
+            color: white;
+            padding: 8px 16px;
+            margin-right: 10px;
+        }
+
+        .admin-only {
+            display: none;  /* 默认隐藏管理员功能 */
+        }
+
+        .admin-mode .admin-only {
+            display: inline-block;  /* 管理员模式下显示 */
+        }
+
+        /* 添加管理员模式下的删除按钮样式 */
+        .delete-student-btn {
+            display: none; /* 默认隐藏删除按钮 */
+        }
+        
+        .admin-mode .delete-student-btn {
+            display: flex; /* 管理员模式下显示删除按钮 */
+        }
+        
+        /* 添加卡片在非管理员模式下的样式 */
+        .add-student-card {
+            display: none; /* 默认隐藏添加卡片 */
+        }
+        
+        .admin-mode .add-student-card {
+            display: flex; /* 管理员模式下显示添加卡片 */
+        }
+    </style>
+</head>
+<body>
+    <!-- 在 main-content div 之前添加移动端排行榜 -->
+    <div class="mobile-leaderboard">
+        <div class="leaderboard-title">积分排行榜</div>
+        <div id="mobileRankingList"></div>
+    </div>
+
+    <!-- 修改主要内容的包装器 -->
+    <div class="main-content">
+        <h2>五年3班学生积分管理系统</h2>
+        
+        <div class="controls">
+            <button class="admin-btn" onclick="toggleAdmin()">管理员登录</button>
+            <button class="change-password-btn admin-only" onclick="handleChangePassword()">修改密码</button>
+            <button class="clear-storage-btn admin-only" onclick="clearStorage()">清除所有数据</button>
+            <button class="reset-btn admin-only" onclick="resetAllScores()">重置所有积分</button>
+            <button class="sort-btn" onclick="sortStudents()">按积分排序</button>
+            <button class="restore-order-btn" onclick="restoreOriginalOrder()">恢复默认排序</button>
+            <button class="export-btn admin-only" onclick="exportToExcel()">导出到Excel</button>
+            <button class="import-btn admin-only" onclick="importFromExcel()">从Excel导入</button>
+        </div>
+        
+        <div class="student-grid" id="studentContainer"></div>
+    </div>
+
+    <!-- 添加排行榜 -->
+    <div class="leaderboard">
+        <div class="leaderboard-title">积分排行榜</div>
+        <div id="rankingList"></div>
+    </div>
+
+    <!-- 修改历史记录弹窗HTML结构 -->
+    <div class="modal-base" id="historyModal">
+        <div class="modal-content-base">
+            <span class="modal-close" onclick="closeHistoryModal()">&times;</span>
+            <h3 class="modal-title" id="historyTitle">积分历史记录</h3>
+            <div class="modal-content" id="historyContent"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-primary" onclick="closeHistoryModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加姓名编辑弹窗 -->
+    <div class="modal-base" id="nameEditModal">
+        <div class="modal-content-base">
+            <h3 class="modal-title">修改姓名</h3>
+            <div class="modal-content"></div>
+                <input type="text" class="modal-input" id="nameInput" placeholder="请输入新的姓名">
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-primary" onclick="submitNameEdit()">确定</button>
+                <button class="modal-btn modal-btn-secondary" onclick="closeNameEditModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加密码弹窗HTML -->
+    <div class="password-modal" id="passwordModal">
+        <div class="password-modal-content">
+            <h3 class="password-title">请输入解锁密码</h3>
+            <input type="password" class="password-input" id="passwordInput" placeholder="请输入密码">
+            <div class="password-buttons">
+                <button class="password-btn password-submit" onclick="submitPassword()">确认</button>
+                <button class="password-btn password-cancel" onclick="closePasswordModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改系统提示弹窗的HTML结构 -->
+    <div class="modal-base system-alert" id="alertModal">
+        <div class="modal-content-base">
+            <span class="modal-close" onclick="closeAlertModal()">&times;</span>
+            <h3 class="modal-title">系统提示</h3>
+            <div class="modal-content" id="alertContent"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-primary" onclick="closeAlertModal()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改确认弹窗 -->
+    <div class="modal-base" id="confirmModal">
+        <div class="modal-content-base">
+            <h3 class="modal-title">确认</h3>
+            <div class="modal-content" id="confirmContent"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-primary" onclick="handleConfirm(true)">确定</button>
+                <button class="modal-btn modal-btn-secondary" onclick="handleConfirm(false)">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加二维码按钮 -->
+    <button class="qr-btn" onclick="showQRCode()">
+        <span style="font-size: 24px;">📱</span>
+    </button>
+
+    <!-- 添加二维码弹窗 -->
+    <div class="modal-base qr-modal" id="qrModal">
+        <div class="modal-content-base">
+            <span class="modal-close" onclick="closeQRModal()">&times;</span>
+            <h3 class="modal-title">手机扫码访问</h3>
+            <div id="qrcode"></div>
+            <div class="qr-instructions">
+                使用手机相机扫描二维码即可在手机上访问系统
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-primary" onclick="closeQRModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加修改密码弹窗 -->
+    <div class="modal-base" id="changePasswordModal">
+        <div class="modal-content-base">
+            <span class="modal-close" onclick="closeChangePasswordModal()">&times;</span>
+            <h3 class="modal-title">修改密码</h3>
+            <div class="modal-content">
+                <input type="password" class="modal-input" id="oldPassword" placeholder="请输入原密码">
+                <input type="password" class="modal-input" id="newPassword" placeholder="请输入新密码">
+                <input type="password" class="modal-input" id="confirmPassword" placeholder="请确认新密码">
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-primary" onclick="submitChangePassword()">确定</button>
+                <button class="modal-btn modal-btn-secondary" onclick="closeChangePasswordModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加验证密码弹窗到 body 中 -->
+    <div class="modal-base" id="verifyPasswordModal">
+        <div class="modal-content-base">
+            <h3 class="modal-title">请输入系统密码</h3>
+            <div class="modal-content">
+                <input type="password" class="modal-input" id="verifyPassword" placeholder="请输入密码">
+                <div class="qr-instructions" style="margin-bottom: 10px;">
+                    <span id="verifyPasswordMessage"></span>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-primary" onclick="submitVerifyPassword()">确认</button>
+                <button class="modal-btn modal-btn-secondary" onclick="closeVerifyPasswordModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加新增学生弹窗 -->
+    <div class="modal-base" id="addStudentModal">
+        <div class="modal-content-base">
+            <span class="modal-close" onclick="closeAddStudentModal()">&times;</span>
+            <h3 class="modal-title">新增学生</h3>
+            <div class="modal-content">
+                <input type="text" class="modal-input" id="newStudentName" placeholder="请输入学生姓名">
+                <div class="qr-instructions" style="color: #666;">
+                    提示：姓名中不要包含数字，序号会自动生成
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-primary" onclick="submitAddStudent()">确定</button>
+                <button class="modal-btn modal-btn-secondary" onclick="closeAddStudentModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加管理员登录弹窗 -->
+    <div class="modal-base" id="adminLoginModal">
+        <div class="modal-content-base">
+            <span class="modal-close" onclick="closeAdminLogin()">&times;</span>
+            <h3 class="modal-title">管理员登录</h3>
+            <div class="modal-content">
+                <input type="password" class="modal-input" id="adminPassword" placeholder="请输入管理员密码">
+                <div class="qr-instructions" style="color: #666;">
+                    初始管理员密码：admin888
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-primary" onclick="submitAdminLogin()">登录</button>
+                <button class="modal-btn modal-btn-secondary" onclick="closeAdminLogin()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化学生数据
+        const initializeStudents = () => {
+            const students = JSON.parse(localStorage.getItem('students')) || [];
+            if (students.length === 0) {
+                const names = [
+                    '蔡煜安', '陈泽勋', '陈梓轩', '洪健城', '黄镓艺', '江臻胤',
+                    '练长鑫', '廖柏辰', '林梓琦', '苏俊敏', '张煜锋', '陈煌仪',
+                    '王璟逸', '张瀚琪', '林禹衡', '王茁恺', '黄蓥芯', '杨子妍',
+                    '曾雅琳', '苏恩怡', '王希恩', '姚庄诚', '张宇彤', '李嘉勋',
+                    '林凯楠', '陈玥颖', '费奕文', '梁世弘', '吕紫翔', '李秋华',
+                    '许宏伟', '陈文铄', '赵梓言', '苏瑾萱', '陈嘉俊', '郑沛文'
+                ];
+                names.forEach((name, index) => {
+                    students.push({
+                        id: index + 1,
+                        name: name,
+                        score: 0
+                    });
+                });
+                localStorage.setItem('students', JSON.stringify(students));
+            }
+            return students;
+        };
+
+        // 更新分数
+        window.updateScore = (studentId, operation) => {
+            const input = document.getElementById(`input-${studentId}`);
+            const value = parseInt(input.value);
+            
+            if (isNaN(value) || value <= 0) {
+                showAlert("请输入有效的正整数值");
+                return;
+            }
+
+            const students = JSON.parse(localStorage.getItem('students'));
+            const student = students.find(s => s.id === studentId);
+            const oldScore = student.score;
+            
+            if (operation === 'add') {
+                student.score += value;
+            } else {
+                student.score = Math.max(0, student.score - value);
+            }
+            
+            addHistory(studentId, operation, value, oldScore, student.score);
+            localStorage.setItem('students', JSON.stringify(students));
+            updateDisplay(students);
+            resetAdminTimer();
+        };
+
+        // 修改编辑姓名函数
+        window.editName = (studentId) => {
+            if (!isAdmin) {
+                showAlert('修改姓名需要管理员权限！');
+                return;
+            }
+            
+            checkLock(() => {
+                const students = JSON.parse(localStorage.getItem('students'));
+                const student = students.find(s => s.id === studentId);
+                currentEditingId = studentId;
+                
+                const modal = document.getElementById('nameEditModal');
+                const input = document.getElementById('nameInput');
+                input.value = student.name.replace(/^\d+\./, ''); // 移除现有序号
+                modal.style.display = 'flex';
+                input.focus();
+                input.select();
+                resetAdminTimer();  // 重置管理员超时计时器
+            });
+        };
+
+        function closeNameEditModal() {
+            document.getElementById('nameEditModal').style.display = 'none';
+            currentEditingId = null;
+        }
+
+        function submitNameEdit() {
+            const newName = document.getElementById('nameInput').value.trim();
+            if (!newName) {
+                showAlert('姓名不能为空！');
+                return;
+            }
+
+            if (/\d/.test(newName)) {
+                showAlert('姓名不能包含数字！');
+                return;
+            }
+
+            if (currentEditingId) {
+                const students = JSON.parse(localStorage.getItem('students'));
+                const student = students.find(s => s.id === currentEditingId);
+                const studentIndex = students.findIndex(s => s.id === currentEditingId);
+                student.name = `${studentIndex + 1}.${newName}`;  // 添加序号前缀
+                localStorage.setItem('students', JSON.stringify(students));
+                updateDisplay(students);
+                closeNameEditModal();
+                showAlert('✅ 修改姓名成功！');
+            }
+        }
+
+        // 添加回车键提交姓名修改
+        document.getElementById('nameInput').addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                submitNameEdit();
+            }
+        });
+
+        // 修改清除存储函数
+        window.clearStorage = () => {
+            if (!isAdmin) {
+                showAlert('此操作需要管理员权限！');
+                return;
+            }
+
+            if (isLocked) {
+                showAlert('系统已锁定，请先解锁！');
+                return;
+            }
+            
+            showConfirm('确定要清除所有数据吗？清除后将重新初始化学生名单', (result) => {
+                if (result) {
+                    localStorage.removeItem('students');
+                    localStorage.removeItem('scoreHistory');
+                    showAlert('⚠️ 数据已清除，系统将重新初始化', true);
+                    setTimeout(() => location.reload(), 2000);
+                }
+            });
+        };
+
+        // 修改重置积分函数
+        window.resetAllScores = () => {
+            if (!isAdmin) {
+                showAlert('此操作需要管理员权限！');
+                return;
+            }
+
+            if (isLocked) {
+                showAlert('系统已锁定，请先解锁！');
+                return;
+            }
+
+            showConfirm('确定要重置所有学生的积分吗？此操作不可恢复！', (result) => {
+                if (result) {
+                    const students = JSON.parse(localStorage.getItem('students'));
+                    const history = JSON.parse(localStorage.getItem('scoreHistory')) || [];
+                    
+                    // 记录重置操作到历史记录
+                    students.forEach(student => {
+                        if (student.score > 0) {
+                            history.push({
+                                studentId: student.id,
+                                studentName: student.name,
+                                operation: 'reset',
+                                value: student.score,
+                                oldScore: student.score,
+                                newScore: 0,
+                                timestamp: new Date().toLocaleString()
+                            });
+                            student.score = 0;
+                        }
+                    });
+                    
+                    localStorage.setItem('students', JSON.stringify(students));
+                    localStorage.setItem('scoreHistory', JSON.stringify(history));
+                    updateDisplay(students);
+                    showAlert('✅ 所有学生积分已重置为0', false);
+                }
+            });
+        };
+
+        // 按积分排序
+        window.sortStudents = () => {
+            const students = JSON.parse(localStorage.getItem('students'));
+            students.sort((a, b) => b.score - a.score);
+            updateDisplay(students);
+        };
+
+        // 恢复默认排序
+        window.restoreOriginalOrder = () => {
+            const students = JSON.parse(localStorage.getItem('students'));
+            students.sort((a, b) => a.id - b.id);
+            updateDisplay(students);
+        };
+
+        // 导出到Excel
+        window.exportToExcel = () => {
+            if (!isAdmin) {
+                showAlert('此操作需要管理员权限！');
+                return;
+            }
+
+            const students = JSON.parse(localStorage.getItem('students'));
+            const history = JSON.parse(localStorage.getItem('scoreHistory')) || [];
+
+            // 准备学生数据工作表
+            const studentData = students.map(s => ({
+                '序号': s.id,
+                '姓名': s.name.replace(/^\d+\./, ''), // 移除序号前缀
+                '积分': s.score
+            }));
+
+            // 准备历史记录工作表
+            const historyData = history.map(h => ({
+                '时间': h.timestamp,
+                '学生': h.studentName.replace(/^\d+\./, ''),
+                '操作': h.operation === 'add' ? '加分' : h.operation === 'subtract' ? '减分' : '重置',
+                '分值': h.value,
+                '变更前积分': h.oldScore,
+                '变更后积分': h.newScore
+            }));
+
+            // 创建工作簿
+            const wb = XLSX.utils.book_new();
+            
+            // 添加学生数据工作表
+            const ws1 = XLSX.utils.json_to_sheet(studentData);
+            XLSX.utils.book_append_sheet(wb, ws1, "学生积分");
+
+            // 添加历史记录工作表
+            const ws2 = XLSX.utils.json_to_sheet(historyData);
+            XLSX.utils.book_append_sheet(wb, ws2, "历史记录");
+
+            // 导出Excel文件
+            XLSX.writeFile(wb, `积分数据_${new Date().toLocaleDateString()}.xlsx`);
+        };
+
+        // 从Excel导入
+        window.importFromExcel = () => {
+            if (!isAdmin) {
+                showAlert('此操作需要管理员权限！');
+                return;
+            }
+
+            if (isLocked) {
+                showAlert('系统已锁定，请先解锁！');
+                return;
+            }
+
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.xlsx, .xls';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = new Uint8Array(event.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        
+                        // 读取学生数据
+                        const studentSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const studentData = XLSX.utils.sheet_to_json(studentSheet);
+                        
+                        // 验证名字格式
+                        const invalidNames = studentData.filter(row => /\d/.test(row['姓名']));
+                        if (invalidNames.length > 0) {
+                            showAlert('导入失败：以下学生姓名包含数字：\n' + 
+                                    invalidNames.map(row => row['姓名']).join('\n'));
+                            return;
+                        }
+
+                        // 转换为应用格式
+                        const students = studentData.map((row, index) => ({
+                            id: index + 1,
+                            name: `${index + 1}.${row['姓名']}`,
+                            score: parseInt(row['积分']) || 0
+                        }));
+
+                        // 保存数据
+                        localStorage.setItem('students', JSON.stringify(students));
+                        updateDisplay(students);
+                        showAlert('✅ 导入成功！');
+
+                    } catch (err) {
+                        console.error(err);
+                        showAlert('导入失败：文件格式错误');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            };
+            input.click();
+        };
+
+        // 添加清除存储的函数
+        window.clearStorage = () => {
+            if (!isAdmin) {
+                showAlert('此操作需要管理员权限！');
+                return;
+            }
+
+            if (isLocked) {
+                showAlert('系统已锁定，请先解锁！');
+                return;
+            }
+            
+            const verifyAndClear = () => {
+                showConfirm('确定要清除所有数据吗？清除后将重新初始化学生名单', (result) => {
+                    if (result) {
+                        localStorage.removeItem('students');
+                        localStorage.removeItem('scoreHistory');
+                        showAlert('⚠️ 数据已清除，系统将重新初始化', true);
+                        setTimeout(() => location.reload(), 2000);
+                    }
+                });
+            };
+
+            // 先验证密码
+            showVerifyPasswordModal(
+                'clear',
+                '此操作将清除所有数据，请输入系统密码确认身份',
+                verifyAndClear
+            );
+        };
+
+        // 添加显示历史记录函数
+        window.showHistory = (studentId) => {
+            const students = JSON.parse(localStorage.getItem('students'));
+            const student = students.find(s => s.id === studentId);
+            const history = JSON.parse(localStorage.getItem('scoreHistory')) || [];
+            const studentHistory = history
+                .filter(h => h.studentId === studentId)
+                .reverse();
+
+            const modal = document.getElementById('historyModal');
+            const title = document.getElementById('historyTitle');
+            const content = document.getElementById('historyContent');
+
+            title.textContent = `${student.name} 的积分历史记录`;
+            content.innerHTML = studentHistory.length ? 
+                studentHistory.map(h => `
+                    <div class="history-item">
+                        ${h.timestamp}: 
+                        ${h.operation === 'add' ? '加' : '减'}${h.value}分
+                        （${h.oldScore} → ${h.newScore}）
+                    </div>
+                `).join('') :
+                '<div class="history-item">暂无历史记录</div>';
+
+            modal.style.display = 'flex';
+        };
+
+        // 添加关闭历史记录弹窗函数
+        window.closeHistoryModal = () => {
+            document.getElementById('historyModal').style.display = 'none';
+        };
+
+        // 点击弹窗外部关闭
+        window.onclick = (event) => {
+            const modal = document.getElementById('historyModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        };
+
+        // 添加更新排行榜函数
+        const updateLeaderboard = (students) => {
+            const topStudents = [...students]
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 5);
+
+            // 更新固定排行榜
+            const rankingList = document.getElementById('rankingList');
+            updateRankingContent(rankingList, topStudents);
+
+            // 更新移动端排行榜
+            const mobileRankingList = document.getElementById('mobileRankingList');
+            updateRankingContent(mobileRankingList, topStudents);
+        };
+
+        // 添加排行榜内容更新函数
+        const updateRankingContent = (container, students) => {
+            if (!container) return;
+            
+            container.innerHTML = students.map((student, index) => {
+                const rankNumber = index + 1;
+                const crown = rankNumber <= 3 ? '👑' : '';
+                const scoreColorClass = getScoreColorClass(student.score);
+                return `
+                    <div class="rank-item rank-${rankNumber}">
+                        <div class="rank-number">${rankNumber}</div>
+                        <div class="rank-name">${student.name.replace(/^\d+\./, '')}</div>
+                        <div class="rank-score ${scoreColorClass}">${student.score}</div>
+                        <div class="rank-crown">${crown}</div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        // 修改积分符号转换函数，使用新的太阳图标
+        const convertScoreToSymbols = (score) => {
+            const symbols = {
+                text: '',
+                html: ''
+            };
+            
+            // 计算太阳数量（100分一个）
+            const suns = Math.floor(score / 100);
+            const remainingAfterSuns = score % 100;
+            
+            // 计算月亮数量（10分一个）
+            const moons = Math.floor(remainingAfterSuns / 10);
+            const remainingAfterMoons = remainingAfterSuns % 10;
+            
+            // 计算星星数量（1分一个）
+            const stars = remainingAfterMoons;
+            
+            // 生成显示文本
+            let textParts = [];
+            if (suns > 0) textParts.push(`${suns}🌞`);  // 使用彩色太阳表情
+            if (moons > 0) textParts.push(`${moons}🌙`);
+            if (stars > 0) textParts.push(`${stars}⭐`);
+            symbols.text = textParts.join(' ');
+            
+            // 生成HTML - 每个符号独立占据一个格子
+            let htmlParts = [];
+            for (let i = 0; i < suns; i++) {
+                htmlParts.push(`<span class="sun">🌞</span>`);  // 使用彩色太阳表情
+            }
+            for (let i = 0; i < moons; i++) {
+                htmlParts.push(`<span class="moon">🌙</span>`);
+            }
+            for (let i = 0; i < stars; i++) {
+                htmlParts.push(`<span class="star">⭐</span>`);
+            }
+            symbols.html = htmlParts.join('');
+            
+            return symbols;
+        };
+
+        // 修复 updateDisplay 函数
+        const updateDisplay = (students) => {
+            const container = document.getElementById('studentContainer');
+            container.innerHTML = '';
+            
+            // 显示学生卡片
+            students.forEach((student, index) => {
+                const symbols = convertScoreToSymbols(student.score);
+                const scoreColorClass = getScoreColorClass(student.score);
+                const card = document.createElement('div');
+                card.className = 'student-card';
+                card.innerHTML = `
+                    <div class="delete-student-btn" onclick="deleteStudent(${student.id})" title="删除学生">×</div>
+                    <div class="student-name" onclick="editName(${student.id})">${(index + 1) + '.' + student.name.replace(/^\d+\./, '')}</div>
+                    <div class="score-display">
+                        <div class="total-score ${scoreColorClass}">积分：${student.score}</div>
+                        <div class="score-symbol" title="${symbols.text}">${symbols.html}</div>
+                    </div>
+                    <input type="number" 
+                           class="score-input" 
+                           id="input-${student.id}" 
+                           min="0" 
+                           value="1"
+                           aria-label="分数值">
+                    <div class="button-group">
+                        <button class="add-btn" onclick="updateScore(${student.id}, 'add')">+ 加分</button>
+                        <button class="subtract-btn" onclick="updateScore(${student.id}, 'subtract')">- 减分</button>
+                    </div>
+                    <button class="history-btn" onclick="showHistory(${student.id})">查看历史记录</button>
+                `;
+                container.appendChild(card);
+            });
+
+            // 添加新增学生卡片
+            const addCard = document.createElement('div');
+            addCard.className = 'student-card add-student-card';
+            addCard.onclick = showAddStudentModal;
+            addCard.innerHTML = `
+                <div class="add-icon">+</div>
+            `;
+            container.appendChild(addCard);
+
+            // 更新排行榜
+            updateLeaderboard(students);
+        };
+
+        // 修复历史记录存储函数
+        const addHistory = (studentId, operation, value, oldScore, newScore) => {
+            const students = JSON.parse(localStorage.getItem('students'));
+            const student = students.find(s => s.id === studentId);
+            const history = JSON.parse(localStorage.getItem('scoreHistory')) || [];
+            
+            history.push({
+                studentId,
+                studentName: student.name,
+                operation,
+                value,
+                oldScore,
+                newScore,
+                timestamp: new Date().toLocaleString()
+            });
+            
+            // 只保留最近100条记录
+            if (history.length > 100) history.shift();
+            localStorage.setItem('scoreHistory', JSON.stringify(history));
+        };
+
+        // 添加锁定相关变量和函数
+        let isLocked = false;
+        let UNLOCK_PASSWORD = '2020503';
+
+        // 切换锁定状态
+        window.toggleLock = () => {
+            if (!isLocked) {
+                // 锁定系统
+                isLocked = true;
+                updateLockState();
+            } else {
+                // 显示密码弹窗
+                showPasswordModal();
+            }
+        };
+
+        // 添加密码弹窗相关函数
+        function showPasswordModal() {
+            const modal = document.getElementById('passwordModal');
+            const input = document.getElementById('passwordInput');
+            modal.style.display = 'flex';
+            input.value = '';
+            input.focus();
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').style.display = 'none';
+        }
+
+        function submitPassword() {
+            const password = document.getElementById('passwordInput').value;
+            if (password === UNLOCK_PASSWORD) {
+                isLocked = false;
+                updateLockState();
+                closePasswordModal();
+            } else {
+                showAlert('密码错误！');
+            }
+        }
+
+        // 添加回车键提交密码功能
+        document.getElementById('passwordInput').addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                submitPassword();
+            }
+        });
+
+        // 点击弹窗外部关闭
+        document.getElementById('passwordModal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                closePasswordModal();
+            }
+        });
+
+        // 更新锁定状态UI
+        const updateLockState = () => {
+            const lockBtn = document.querySelector('.lock-btn');
+            const controls = document.querySelectorAll('.controls button:not(.lock-btn), .student-card button, .student-card input, .student-name');
+            
+            if (isLocked) {
+                lockBtn.textContent = '系统已锁定';
+                lockBtn.classList.add('locked');
+                controls.forEach(el => el.classList.add('disabled'));
+            } else {
+                lockBtn.textContent = '系统未锁定';
+                lockBtn.classList.remove('locked');
+                controls.forEach(el => el.classList.remove('disabled'));
+            }
+        };
+
+        // 修改所有操作函数，添加锁定检查
+        const checkLock = (callback) => {
+            if (isLocked) {
+                showAlert('系统已锁定，请先解锁！');
+                return false;
+            }
+            return callback();
+        };
+
+        // 添加自定义弹窗相关函数
+        let confirmCallback = null;
+
+        function showAlert(message, isWarning = false) {
+            const modal = document.getElementById('alertModal');
+            const content = document.getElementById('alertContent');
+            const alertClass = isWarning ? 'warning' : '';
+            
+            // 添加或移除 warning 类
+            modal.className = `modal-base system-alert ${alertClass}`;
+            
+            // 根据消息类型设置不同的标题
+            const title = modal.querySelector('.modal-title');
+            title.textContent = isWarning ? '系统警告' : '系统提示';
+            
+            // 设置消息内容
+            content.textContent = message;
+            modal.style.display = 'flex';
+        }
+
+        function closeAlertModal() {
+            document.getElementById('alertModal').style.display = 'none';
+        }
+
+        function showConfirm(message, callback) {
+            const modal = document.getElementById('confirmModal');
+            const content = document.getElementById('confirmContent');
+            content.textContent = message;
+            confirmCallback = callback;
+            modal.style.display = 'flex';
+        }
+
+        function handleConfirm(result) {
+            document.getElementById('confirmModal').style.display = 'none';
+            if (confirmCallback) {
+                confirmCallback(result);
+                confirmCallback = null;
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            const students = initializeStudents();
+            updateDisplay(students);
+            // 从localStorage读取保存的密码
+            const savedPassword = localStorage.getItem('systemPassword');
+            const savedAdminPassword = localStorage.getItem('adminPassword');
+            if (savedPassword) {
+                UNLOCK_PASSWORD = savedPassword;
+            }
+            if (savedAdminPassword) {
+                ADMIN_PASSWORD = savedAdminPassword;
+            }
+            updateAdminUI();
+        });
+
+        // 点击弹窗外部关闭
+        document.addEventListener('click', function(event) {
+            const modals = document.querySelectorAll('.modal-base');
+            modals.forEach(modal => {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                    if (modal.id === 'nameEditModal') {
+                        currentEditingId = null;
+                    }
+                }
+            });
+        });
+
+        // 修改分数颜色区间函数
+        const getScoreColorClass = (score) => {
+            if (score >= 500) return 'score-500-1000';
+            if (score >= 100) return 'score-100-500';
+            return 'score-0-100';
+        };
+
+        // 添加二维码相关函数
+        let qrcode = null;
+        
+        function showQRCode() {
+            const modal = document.getElementById('qrModal');
+            modal.style.display = 'flex';
+            
+            if (!qrcode) {
+                // 获取当前页面URL
+                const currentURL = window.location.href;
+                
+                // 创建二维码
+                qrcode = new QRCode("qrcode", {
+                    text: currentURL,
+                    width: 256,
+                    height: 256,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }
+        }
+
+        function closeQRModal() {
+            document.getElementById('qrModal').style.display = 'none';
+        }
+
+        // 点击弹窗外部关闭
+        document.querySelector('.qr-modal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                closeQRModal();
+            }
+        });
+
+        // 添加修改密码相关函数
+        function showChangePasswordModal(isForced = false) {
+            if (isLocked && !isForced) {
+                showAlert('请先解锁系统再修改密码！');
+                return;
+            }
+            const modal = document.getElementById('changePasswordModal');
+            modal.style.display = 'flex';
+            // 清空输入框
+            document.getElementById('oldPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            
+            // 如果是强制修改密码，禁用关闭按钮
+            const closeBtn = modal.querySelector('.modal-close');
+            const cancelBtn = modal.querySelector('.modal-btn-secondary');
+            if (isForced) {
+                closeBtn.style.display = 'none';
+                cancelBtn.style.display = 'none';
+                modal.setAttribute('data-forced', 'true');
+            } else {
+                closeBtn.style.display = 'block';
+                cancelBtn.style.display = 'block';
+                modal.removeAttribute('data-forced');
+            }
+        }
+
+        function closeChangePasswordModal() {
+            const modal = document.getElementById('changePasswordModal');
+            if (modal.getAttribute('data-forced') === 'true') {
+                showAlert('首次登录必须修改默认密码！');
+                return;
+            }
+            modal.style.display = 'none';
+        }
+
+        function submitChangePassword() {
+            const oldPassword = document.getElementById('oldPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!oldPassword || !newPassword || !confirmPassword) {
+                showAlert('请填写所有密码字段！');
+                return;
+            }
+
+            if (oldPassword !== ADMIN_PASSWORD) {
+                showAlert('原密码错误！');
+                return;
+            }
+
+            if (newPassword === 'admin888') {
+                showAlert('新密码不能与默认密码相同！');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showAlert('两次输入的新密码不一致！');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showAlert('新密码长度不能少于6位！');
+                return;
+            }
+
+            // 更新管理员密码
+            ADMIN_PASSWORD = newPassword;
+            // 保存到 localStorage
+            localStorage.setItem('adminPassword', newPassword);
+            
+            // 关闭弹窗
+            const modal = document.getElementById('changePasswordModal');
+            modal.removeAttribute('data-forced');
+            modal.style.display = 'none';
+            
+            showAlert('✅ 密码修改成功！');
+            resetAdminTimer();  // 重置管理员计时器
+        }
+
+        // 添加回车键提交支持
+        document.getElementById('confirmPassword').addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                submitChangePassword();
+            }
+        });
+
+        // 添加密码验证相关变量和函数
+        let currentOperation = null;
+        let verifyCallback = null;
+
+        function showVerifyPasswordModal(operation, message, callback) {
+            const modal = document.getElementById('verifyPasswordModal');
+            const messageElem = document.getElementById('verifyPasswordMessage');
+            const input = document.getElementById('verifyPassword');
+            
+            currentOperation = operation;
+            verifyCallback = callback;
+            messageElem.textContent = message;
+            
+            modal.style.display = 'flex';
+            input.value = '';
+            input.focus();
+        }
+
+        function closeVerifyPasswordModal() {
+            document.getElementById('verifyPasswordModal').style.display = 'none';
+            currentOperation = null;
+            verifyCallback = null;
+        }
+
+        // 修改密码验证提交函数
+        function submitVerifyPassword() {
+            const password = document.getElementById('verifyPassword').value;
+            if (!password) {
+                showAlert('请输入密码！');
+                return;
+            }
+            
+            if (password === UNLOCK_PASSWORD) {
+                if (verifyCallback) {
+                    const callback = verifyCallback;
+                    closeVerifyPasswordModal();
+                    callback();
+                }
+            } else {
+                showAlert('密码错误！');
+            }
+        }
+
+        // 添加回车键提交支持
+        document.getElementById('verifyPassword').addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                submitVerifyPassword();
+            }
+        });
+
+        // 添加点击外部关闭验证弹窗
+        document.getElementById('verifyPasswordModal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                closeVerifyPasswordModal();
+            }
+        });
+
+        // 添加新增学生相关函数
+        function showAddStudentModal() {
+            if (!isAdmin) {
+                showAlert('需要管理员权限！');
+                return;
+            }
+            const modal = document.getElementById('addStudentModal');
+            const input = document.getElementById('newStudentName');
+            modal.style.display = 'flex';
+            input.value = '';
+            input.focus();
+            resetAdminTimer();
+        }
+
+        function closeAddStudentModal() {
+            document.getElementById('addStudentModal').style.display = 'none';
+        }
+
+        function submitAddStudent() {
+            const name = document.getElementById('newStudentName').value.trim();
+            
+            if (!name) {
+                showAlert('请输入学生姓名！');
+                return;
+            }
+
+            if (/\d/.test(name)) {
+                showAlert('姓名不能包含数字！');
+                return;
+            }
+
+            const students = JSON.parse(localStorage.getItem('students')) || [];
+            const newId = students.length > 0 ? Math.max(...students.map(s => s.id)) + 1 : 1;
+            
+            students.push({
+                id: newId,
+                name: name,
+                score: 0
+            });
+
+            localStorage.setItem('students', JSON.stringify(students));
+            updateDisplay(students);
+            closeAddStudentModal();
+            showAlert('✅ 新增学生成功！');
+        }
+
+        // 添加删除学生函数
+        function deleteStudent(studentId) {
+            if (!isAdmin) {
+                showAlert('需要管理员权限！');
+                return;
+            }
+
+            showConfirm('确定要删除这个学生吗？相关的积分记录也会被删除！', (result) => {
+                if (result) {
+                    const students = JSON.parse(localStorage.getItem('students'));
+                    const history = JSON.parse(localStorage.getItem('scoreHistory')) || [];
+                    
+                    // 删除学生
+                    const updatedStudents = students.filter(s => s.id !== studentId);
+                    // 删除相关历史记录
+                    const updatedHistory = history.filter(h => h.studentId !== studentId);
+                    
+                    localStorage.setItem('students', JSON.stringify(updatedStudents));
+                    localStorage.setItem('scoreHistory', JSON.stringify(updatedHistory));
+                    
+                    updateDisplay(updatedStudents);
+                    showAlert('✅ 删除成功！');
+                }
+            });
+        }
+
+        // 修改导入函数中的数据处理
+        window.importFromExcel = () => {
+            if (!isAdmin) {
+                showAlert('此操作需要管理员权限！');
+                return;
+            }
+
+            if (isLocked) {
+                showAlert('系统已锁定，请先解锁！');
+                return;
+            }
+
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.xlsx, .xls';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = new Uint8Array(event.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        
+                        // 读取学生数据
+                        const studentSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const studentData = XLSX.utils.sheet_to_json(studentSheet);
+                        
+                        // 验证名字格式
+                        const invalidNames = studentData.filter(row => /\d/.test(row['姓名']));
+                        if (invalidNames.length > 0) {
+                            showAlert('导入失败：以下学生姓名包含数字：\n' + 
+                                    invalidNames.map(row => row['姓名']).join('\n'));
+                            return;
+                        }
+
+                        // 转换为应用格式
+                        const students = studentData.map((row, index) => ({
+                            id: index + 1,
+                            name: `${index + 1}.${row['姓名']}`,
+                            score: parseInt(row['积分']) || 0
+                        }));
+
+                        // 保存数据
+                        localStorage.setItem('students', JSON.stringify(students));
+                        updateDisplay(students);
+                        showAlert('✅ 导入成功！');
+
+                    } catch (err) {
+                        console.error(err);
+                        showAlert('导入失败：文件格式错误');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            };
+            input.click();
+        };
+
+        // 添加回车键提交支持
+        document.getElementById('newStudentName').addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                submitAddStudent();
+            }
+        });
+
+        // 添加管理员相关变量
+        let isAdmin = false;
+        let ADMIN_PASSWORD = 'admin888';
+        let adminTimer = null;
+
+        // 修改初始化函数，添加管理员密码读取
+        document.addEventListener('DOMContentLoaded', () => {
+            const students = initializeStudents();
+            updateDisplay(students);
+            // 从localStorage读取保存的密码
+            const savedPassword = localStorage.getItem('systemPassword');
+            const savedAdminPassword = localStorage.getItem('adminPassword');
+            if (savedPassword) {
+                UNLOCK_PASSWORD = savedPassword;
+            }
+            if (savedAdminPassword) {
+                ADMIN_PASSWORD = savedAdminPassword;
+            }
+            updateAdminUI();
+        });
+
+        // 添加管理员登录相关函数
+        function toggleAdmin() {
+            if (isAdmin) {
+                isAdmin = false;
+                if (adminTimer) {
+                    clearTimeout(adminTimer);
+                    adminTimer = null;
+                }
+                updateAdminUI();
+                showAlert('已退出管理员模式');
+            } else {
+                showAdminLogin();
+            }
+        }
+
+        function showAdminLogin() {
+            const modal = document.getElementById('adminLoginModal');
+            const input = document.getElementById('adminPassword');
+            modal.style.display = 'flex';
+            input.value = '';
+            input.focus();
+        }
+
+        function closeAdminLogin() {
+            document.getElementById('adminLoginModal').style.display = 'none';
+        }
+
+        function submitAdminLogin() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === ADMIN_PASSWORD) {
+                isAdmin = true;
+                updateAdminUI();
+                closeAdminLogin();
+                
+                // 检查是否是首次登录（使用默认密码）
+                if (password === 'admin888') {
+                    showAlert('首次登录需要修改密码以保护数据安全！');
+                    setTimeout(() => {
+                        showChangePasswordModal(true); // true 表示强制修改密码
+                    }, 1500);
+                } else {
+                    showAlert('✅ 管理员登录成功！');
+                }
+                resetAdminTimer();
+            } else {
+                showAlert('密码错误！');
+            }
+        }
+
+        // 更新管理员UI状态
+        function updateAdminUI() {
+            const adminBtn = document.querySelector('.admin-btn');
+            adminBtn.textContent = isAdmin ? '退出管理员' : '管理员登录';
+            document.body.classList.toggle('admin-mode', isAdmin);
+        }
+
+        // 修改所有管理员操作函数，添加管理员检查
+        const checkAdmin = (callback) => {
+            if (!isAdmin) {
+                showAlert('此操作需要管理员权限！');
+                return false;
+            }
+            callback(); // 直接执行回调，不再返回值
+        };
+
+        // 修改相关操作函数的定义方式
+        window.clearStorage = () => {
+            if (!isAdmin) {
+                showAlert('此操作需要管理员权限！');
+                return;
+            }
+
+            if (isLocked) {
+                showAlert('系统已锁定，请先解锁！');
+                return;
+            }
+            
+            showConfirm('确定要清除所有数据吗？清除后将重新初始化学生名单', (result) => {
+                if (result) {
+                    localStorage.removeItem('students');
+                    localStorage.removeItem('scoreHistory');
+                    showAlert('⚠️ 数据已清除，系统将重新初始化', true);
+                    setTimeout(() => location.reload(), 2000);
+                }
+            });
+        };
+
+        window.resetAllScores = () => {
+            if (!isAdmin) {
+                showAlert('此操作需要管理员权限！');
+                return;
+            }
+
+            if (isLocked) {
+                showAlert('系统已锁定，请先解锁！');
+                return;
+            }
+
+            showConfirm('确定要重置所有学生的积分吗？此操作不可恢复！', (result) => {
+                if (result) {
+                    const students = JSON.parse(localStorage.getItem('students'));
+                    const history = JSON.parse(localStorage.getItem('scoreHistory')) || [];
+                    
+                    students.forEach(student => {
+                        if (student.score > 0) {
+                            history.push({
+                                studentId: student.id,
+                                studentName: student.name,
+                                operation: 'reset',
+                                value: student.score,
+                                oldScore: student.score,
+                                newScore: 0,
+                                timestamp: new Date().toLocaleString()
+                            });
+                            student.score = 0;
+                        }
+                    });
+                    
+                    localStorage.setItem('students', JSON.stringify(students));
+                    localStorage.setItem('scoreHistory', JSON.stringify(history));
+                    updateDisplay(students);
+                    showAlert('✅ 所有学生积分已重置为0', false);
+                }
+            });
+        };
+
+        window.exportToExcel = () => {
+            if (!isAdmin) {
+                showAlert('此操作需要管理员权限！');
+                return;
+            }
+
+            const students = JSON.parse(localStorage.getItem('students'));
+            const history = JSON.parse(localStorage.getItem('scoreHistory')) || [];
+
+            // 准备学生数据工作表
+            const studentData = students.map(s => ({
+                '序号': s.id,
+                '姓名': s.name.replace(/^\d+\./, ''),
+                '积分': s.score
+            }));
+
+            // 准备历史记录工作表
+            const historyData = history.map(h => ({
+                '时间': h.timestamp,
+                '学生': h.studentName.replace(/^\d+\./, ''),
+                '操作': h.operation === 'add' ? '加分' : h.operation === 'subtract' ? '减分' : '重置',
+                '分值': h.value,
+                '变更前积分': h.oldScore,
+                '变更后积分': h.newScore
+            }));
+
+            // 创建工作簿
+            const wb = XLSX.utils.book_new();
+            
+            // 添加工作表
+            const ws1 = XLSX.utils.json_to_sheet(studentData);
+            const ws2 = XLSX.utils.json_to_sheet(historyData);
+            XLSX.utils.book_append_sheet(wb, ws1, "学生积分");
+            XLSX.utils.book_append_sheet(wb, ws2, "历史记录");
+
+            // 导出Excel文件
+            XLSX.writeFile(wb, `积分数据_${new Date().toLocaleDateString()}.xlsx`);
+        };
+
+        window.importFromExcel = () => {
+            if (!isAdmin) {
+                showAlert('此操作需要管理员权限！');
+                return;
+            }
+
+            if (isLocked) {
+                showAlert('系统已锁定，请先解锁！');
+                return;
+            }
+
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.xlsx, .xls';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = new Uint8Array(event.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        
+                        const studentSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const studentData = XLSX.utils.sheet_to_json(studentSheet);
+                        
+                        const invalidNames = studentData.filter(row => /\d/.test(row['姓名']));
+                        if (invalidNames.length > 0) {
+                            showAlert('导入失败：以下学生姓名包含数字：\n' + 
+                                    invalidNames.map(row => row['姓名']).join('\n'));
+                            return;
+                        }
+
+                        const students = studentData.map((row, index) => ({
+                            id: index + 1,
+                            name: `${index + 1}.${row['姓名']}`,
+                            score: parseInt(row['积分']) || 0
+                        }));
+
+                        localStorage.setItem('students', JSON.stringify(students));
+                        updateDisplay(students);
+                        showAlert('✅ 导入成功！');
+                    } catch (err) {
+                        console.error(err);
+                        showAlert('导入失败：文件格式错误');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            };
+            input.click();
+        };
+
+        // 添加回车键提交支持
+        document.getElementById('adminPassword').addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                submitAdminLogin();
+            }
+        });
+
+        // 修改密码修改函数，加入管理员密码修改功能
+        function submitChangePassword() {
+            const oldPassword = document.getElementById('oldPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!oldPassword || !newPassword || !confirmPassword) {
+                showAlert('请填写所有密码字段！');
+                return;
+            }
+
+            if (oldPassword !== ADMIN_PASSWORD) {
+                showAlert('原密码错误！');
+                return;
+            }
+
+            if (newPassword === 'admin888') {
+                showAlert('新密码不能与默认密码相同！');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showAlert('两次输入的新密码不一致！');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showAlert('新密码长度不能少于6位！');
+                return;
+            }
+
+            // 更新管理员密码
+            ADMIN_PASSWORD = newPassword;
+            // 保存到localStorage
+            localStorage.setItem('adminPassword', newPassword);
+            showAlert('✅ 密码修改成功！');
+            closeChangePasswordModal();
+        }
+
+        // 添加管理员自动退出功能
+        function resetAdminTimer() {
+            if (adminTimer) {
+                clearTimeout(adminTimer);
+            }
+            if (isAdmin) {
+                adminTimer = setTimeout(() => {
+                    if (isAdmin) {
+                        isAdmin = false;
+                        updateAdminUI();
+                        showAlert('由于长时间未操作，已自动退出管理员模式');
+                    }
+                }, 5 * 60 * 1000); // 5分钟
+            }
+        }
+
+        // 添加用户操作监听
+        document.addEventListener('mousemove', resetAdminTimer);
+        document.addEventListener('keydown', resetAdminTimer);
+        document.addEventListener('click', resetAdminTimer);
+
+        // 初始化时清除可能存在的定时器
+        document.addEventListener('DOMContentLoaded', () => {
+            if (adminTimer) {
+                clearTimeout(adminTimer);
+                adminTimer = null;
+            }
+            // ...existing initialization code...
+        });
+
+        // 添加处理修改密码的函数
+        function handleChangePassword() {
+            if (!isAdmin) {
+                showAlert('需要管理员权限！');
+                return;
+            }
+            
+            if (isLocked) {
+                showAlert('请先解锁系统再修改密码！');
+                return;
+            }
+
+            const modal = document.getElementById('changePasswordModal');
+            const oldPasswordInput = document.getElementById('oldPassword');
+            const newPasswordInput = document.getElementById('newPassword');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            
+            // 清空输入框
+            oldPasswordInput.value = '';
+            newPasswordInput.value = '';
+            confirmPasswordInput.value = '';
+            
+            // 显示弹窗
+            modal.style.display = 'flex';
+            oldPasswordInput.focus();
+        }
+
+        // 修改关闭修改密码弹窗的函数
+        function closeChangePasswordModal() {
+            const modal = document.getElementById('changePasswordModal');
+            if (modal.getAttribute('data-forced') === 'true') {
+                showAlert('首次登录必须修改默认密码！');
+                return;
+            }
+            modal.style.display = 'none';
+        }
+
+        // 修改提交密码修改的函数
+        function submitChangePassword() {
+            const oldPassword = document.getElementById('oldPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!oldPassword || !newPassword || !confirmPassword) {
+                showAlert('请填写所有密码字段！');
+                return;
+            }
+
+            if (oldPassword !== ADMIN_PASSWORD) {
+                showAlert('原密码错误！');
+                return;
+            }
+
+            if (newPassword === 'admin888') {
+                showAlert('新密码不能与默认密码相同！');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showAlert('两次输入的新密码不一致！');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showAlert('新密码长度不能少于6位！');
+                return;
+            }
+
+            // 更新管理员密码
+            ADMIN_PASSWORD = newPassword;
+            // 保存到 localStorage
+            localStorage.setItem('adminPassword', newPassword);
+            
+            // 关闭弹窗
+            const modal = document.getElementById('changePasswordModal');
+            modal.removeAttribute('data-forced');
+            modal.style.display = 'none';
+            
+            showAlert('✅ 密码修改成功！');
+            resetAdminTimer();  // 重置管理员计时器
+        }
+
+        // 添加回车键提交支持
+        document.getElementById('confirmPassword').addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                submitChangePassword();
+            }
+        });
+    </script>
+</body>
+>>>>>>> 646d60ee00295d3284a07771c6d73d55cba29bcd
 </html>
