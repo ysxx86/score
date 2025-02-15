@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <!-- 添加移动端视口配置 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>五年3班学生积分管理系统V1.0</title>
+    <title>五年3班学生积分管理系统</title>
     <!-- 添加 SheetJS 库 -->
     <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
     <!-- 添加 QRCode.js 库 -->
@@ -982,6 +982,166 @@
                 min-height: 110px;
             }
         }
+
+        /* 优化移动端布局和交互样式 */
+        @media screen and (max-width: 768px) {
+            .student-card {
+                min-height: 140px;
+                padding: 15px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                position: relative;
+            }
+
+            .student-name {
+                font-size: 15px;
+                margin-bottom: 8px;
+                padding: 4px 8px;
+                background: #f5f5f5;
+                border-radius: 4px;
+                text-align: center;
+            }
+
+            .total-score {
+                font-size: 16px;
+                margin: 8px 0;
+                text-align: center;
+                padding: 4px 0;
+            }
+
+            .score-input {
+                width: 60px;
+                height: 32px;
+                font-size: 16px;
+                text-align: center;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                margin: 0 auto;
+                display: block;
+            }
+
+            .button-group {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                margin-top: 10px;
+            }
+
+            .add-btn, .subtract-btn {
+                height: 40px;
+                font-size: 20px;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 6px;
+            }
+
+            .history-btn {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                width: 32px;
+                height: 32px;
+                padding: 0;
+                border-radius: 50%;
+                font-size: 12px;
+                background-color: #607d8b;
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                opacity: 0.8;
+            }
+
+            /* 优化移动端按钮触摸反馈 */
+            @media (hover: none) {
+                .add-btn:active, .subtract-btn:active, .history-btn:active {
+                    transform: scale(0.95);
+                    transition: transform 0.1s;
+                }
+            }
+
+            /* 优化移动端控制栏 */
+            .controls {
+                position: sticky;
+                top: 0;
+                background: #fff;
+                padding: 10px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                z-index: 100;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .controls button {
+                flex: 1;
+                min-width: 100px;
+                height: 36px;
+                font-size: 14px;
+                white-space: nowrap;
+                padding: 0 12px;
+            }
+
+            /* 优化移动端排行榜 */
+            .mobile-leaderboard {
+                margin: 15px 0;
+                padding: 12px;
+            }
+
+            .rank-item {
+                padding: 8px 12px;
+                margin: 5px 0;
+                border-radius: 6px;
+            }
+
+            .rank-number {
+                width: 28px;
+                height: 28px;
+                font-size: 14px;
+            }
+
+            .rank-name {
+                font-size: 15px;
+            }
+
+            .rank-score {
+                font-size: 16px;
+            }
+        }
+
+        /* 针对更小屏幕的优化 */
+        @media screen and (max-width: 428px) {
+            .student-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                padding: 10px;
+            }
+
+            .student-card {
+                margin-bottom: 5px;
+            }
+
+            .controls button {
+                min-width: 80px;
+                font-size: 13px;
+            }
+        }
+
+        /* 添加按钮按下反馈效果 */
+        .add-btn:active, .subtract-btn:active {
+            transform: scale(0.95);
+            transition: transform 0.1s;
+        }
+
+        /* 添加输入框激活状态样式 */
+        .score-input:focus {
+            border-color: #2196F3;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -997,7 +1157,7 @@
 
     <!-- 修改主要内容的包装器 -->
     <div class="main-content">
-        <h2>五年3班学生积分管理系统V1.0</h2>
+        <h2>五年3班学生积分管理系统</h2>
         
         <div class="controls">
             <button class="lock-btn" onclick="toggleLock()">锁定系统</button>
@@ -1637,36 +1797,58 @@
                 
                 // 修改卡片内容，根据设备类型显示不同的内容
                 const isMobile = window.innerWidth <= 768;
-                card.innerHTML = `
-                    <div class="delete-student-btn" onclick="deleteStudent(${student.id})" title="删除学生">×</div>
-                    <div class="student-name" onclick="editName(${student.id})">${(index + 1) + '.' + student.name.replace(/^\d+\./, '')}</div>
-                    <div class="score-display">
-                        <div class="total-score ${scoreColorClass}">积分：${student.score}</div>
-                        ${!isMobile ? `<div class="score-symbol" title="${symbols.text}">${symbols.html}</div>` : ''}
-                    </div>
-                    <input type="number" 
-                           class="score-input" 
-                           id="input-${student.id}" 
-                           min="0" 
-                           value="1"
-                           aria-label="分数值">
-                    <div class="button-group">
-                        <button class="add-btn" onclick="updateScore(${student.id}, 'add')">+</button>
-                        <button class="subtract-btn" onclick="updateScore(${student.id}, 'subtract')">-</button>
-                    </div>
-                    <button class="history-btn" onclick="showHistory(${student.id})">历史</button>
-                `;
+                if (isMobile) {
+                    // 移动端优化布局
+                    card.innerHTML = `
+                        <div class="student-name" onclick="editName(${student.id})">
+                            ${(index + 1) + '.' + student.name.replace(/^\d+\./, '')}
+                        </div>
+                        <button class="history-btn" onclick="showHistory(${student.id})">
+                            <span style="transform: rotate(-45deg)">📋</span>
+                        </button>
+                        <div class="total-score ${scoreColorClass}">
+                            积分：${student.score}
+                        </div>
+                        <input type="number" 
+                               class="score-input" 
+                               id="input-${student.id}" 
+                               min="0" 
+                               value="1"
+                               aria-label="分数值">
+                        <div class="button-group">
+                            <button class="add-btn" onclick="updateScore(${student.id}, 'add')">+</button>
+                            <button class="subtract-btn" onclick="updateScore(${student.id}, 'subtract')">-</button>
+                        </div>
+                    `;
+                } else {
+                    // 桌面端保持原有布局
+                    card.innerHTML = `
+                        <div class="delete-student-btn" onclick="deleteStudent(${student.id})" title="删除学生">×</div>
+                        <div class="student-name" onclick="editName(${student.id})">${(index + 1) + '.' + student.name.replace(/^\d+\./, '')}</div>
+                        <div class="score-display">
+                            <div class="total-score ${scoreColorClass}">积分：${student.score}</div>
+                            <div class="score-symbol" title="${symbols.text}">${symbols.html}</div>
+                        </div>
+                        <input type="number" class="score-input" id="input-${student.id}" min="0" value="1">
+                        <div class="button-group">
+                            <button class="add-btn" onclick="updateScore(${student.id}, 'add')">+</button>
+                            <button class="subtract-btn" onclick="updateScore(${student.id}, 'subtract')">-</button>
+                        </div>
+                        <button class="history-btn" onclick="showHistory(${student.id})">历史</button>
+                    `;
+                }
+                
                 container.appendChild(card);
             });
 
             // 添加新增学生卡片
-            const addCard = document.createElement('div');
-            addCard.className = 'student-card add-student-card';
-            addCard.onclick = showAddStudentModal;
-            addCard.innerHTML = `
-                <div class="add-icon">+</div>
-            `;
-            container.appendChild(addCard);
+            if (isAdmin) {
+                const addCard = document.createElement('div');
+                addCard.className = 'student-card add-student-card';
+                addCard.onclick = showAddStudentModal;
+                addCard.innerHTML = `<div class="add-icon">+</div>`;
+                container.appendChild(addCard);
+            }
 
             // 更新排行榜
             updateLeaderboard(students);
@@ -2418,6 +2600,50 @@
                 });
             }
         });
+
+        // 添加触摸设备输入优化
+        if ('ontouchstart' in window) {
+            document.addEventListener('DOMContentLoaded', () => {
+                // 优化数字输入
+                document.querySelectorAll('.score-input').forEach(input => {
+                    input.addEventListener('focus', function() {
+                        this.select();
+                        // 在某些移动浏览器中，选择文本后会出现选择菜单，这里延迟执行可以避免这个问题
+                        setTimeout(() => {
+                            this.select();
+                        }, 10);
+                    });
+                });
+
+                // 添加快捷输入按钮
+                const quickInputs = ['1', '2', '5', '10'];
+                document.querySelectorAll('.student-card').forEach(card => {
+                    const input = card.querySelector('.score-input');
+                    if (input) {
+                        const quickInputContainer = document.createElement('div');
+                        quickInputContainer.className = 'quick-inputs';
+                        quickInputContainer.style.display = 'flex';
+                        quickInputContainer.style.justifyContent = 'center';
+                        quickInputContainer.style.gap = '5px';
+                        quickInputContainer.style.marginTop = '5px';
+                        
+                        quickInputs.forEach(value => {
+                            const btn = document.createElement('button');
+                            btn.textContent = value;
+                            btn.className = 'quick-input-btn';
+                            btn.onclick = () => {
+                                input.value = value;
+                            };
+                            quickInputContainer.appendChild(btn);
+                        });
+                        
+                        if (!card.classList.contains('add-student-card')) {
+                            input.parentNode.insertBefore(quickInputContainer, input.nextSibling);
+                        }
+                    }
+                });
+            });
+        }
     </script>
 </body>
 </html>
